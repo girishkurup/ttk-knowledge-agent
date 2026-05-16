@@ -1,0 +1,579 @@
+{
+  "nodes": [
+    {
+      "id": "batch_sup30498",
+      "label": "SUP30498",
+      "type": "Batch",
+      "properties": {
+        "status": "commercial scale-up",
+        "rejection_rate_initial": "4-5%",
+        "rejection_rate_resolved": "<1%"
+      }
+    },
+    {
+      "id": "product_enalapril",
+      "label": "Enalapril Tablets OSD",
+      "type": "Product",
+      "properties": {
+        "form": "Oral Solid Dosage",
+        "API": "Enalapril Maleate"
+      }
+    },
+    {
+      "id": "eng_schulz",
+      "label": "Schulz",
+      "type": "Engineer",
+      "properties": {
+        "role": "Process Engineer",
+        "site": "Commercial"
+      }
+    },
+    {
+      "id": "op_maria",
+      "label": "Maria",
+      "type": "Operator",
+      "properties": {
+        "role": "Press Operator",
+        "site": "Commercial"
+      }
+    },
+    {
+      "id": "equip_xl800",
+      "label": "Korsch XL800",
+      "type": "Equipment",
+      "properties": {
+        "site": "Commercial",
+        "type": "Rotary Tablet Press"
+      }
+    },
+    {
+      "id": "equip_xl400",
+      "label": "Korsch XL400",
+      "type": "Equipment",
+      "properties": {
+        "site": "Pilot Plant",
+        "type": "Rotary Tablet Press"
+      }
+    },
+    {
+      "id": "site_pilot",
+      "label": "Pilot Plant",
+      "type": "Site",
+      "properties": {
+        "scale": "small-batch R&D"
+      }
+    },
+    {
+      "id": "site_commercial",
+      "label": "Commercial Site",
+      "type": "Site",
+      "properties": {
+        "scale": "full commercial"
+      }
+    },
+    {
+      "id": "issue_capping",
+      "label": "Tablet Capping",
+      "type": "Issue",
+      "properties": {
+        "subtype": "lamination tendency",
+        "onset": "after ~2000 tablets",
+        "worst_positions": "punches 12 & 13"
+      }
+    },
+    {
+      "id": "issue_weight_var",
+      "label": "Weight Variability",
+      "type": "Issue",
+      "properties": {
+        "metric": "weight CV",
+        "pilot_cv": "n/a",
+        "initial_commercial_cv": "1.8%",
+        "resolved_cv": "0.9%"
+      }
+    },
+    {
+      "id": "param_turret_speed",
+      "label": "Turret Speed",
+      "type": "Parameter",
+      "properties": {
+        "pilot_value": "20 RPM",
+        "initial_commercial": "35 RPM",
+        "resolved": "28 RPM",
+        "unit": "RPM"
+      }
+    },
+    {
+      "id": "param_main_force",
+      "label": "Main Compression Force",
+      "type": "Parameter",
+      "properties": {
+        "pilot_value": "12 kN",
+        "commercial_value": "12 kN",
+        "unit": "kN"
+      }
+    },
+    {
+      "id": "param_pre_force",
+      "label": "Pre-compression Force",
+      "type": "Parameter",
+      "properties": {
+        "pilot_value": "3 kN",
+        "initial_commercial": "3.5 kN",
+        "resolved": "4.5 kN",
+        "unit": "kN"
+      }
+    },
+    {
+      "id": "param_lod",
+      "label": "Granule LOD",
+      "type": "Parameter",
+      "properties": {
+        "target": "2.0%",
+        "pilot_actual": "1.9-2.1%",
+        "commercial_actual": "1.6%",
+        "unit": "% w/w"
+      }
+    },
+    {
+      "id": "param_feed_frame",
+      "label": "Feed Frame Speed",
+      "type": "Parameter",
+      "properties": {
+        "adjustment": "reduced to improve fill uniformity"
+      }
+    },
+    {
+      "id": "param_punch_depth",
+      "label": "Punch Penetration Depth",
+      "type": "Parameter",
+      "properties": {
+        "pilot_value": "standard",
+        "commercial_adjustment": "+0.2mm",
+        "documented": "No"
+      }
+    },
+    {
+      "id": "param_dwell_time",
+      "label": "Dwell Time",
+      "type": "Parameter",
+      "properties": {
+        "impact": "significantly reduced at commercial turret speed",
+        "risk": "insufficient consolidation"
+      }
+    },
+    {
+      "id": "mat_enalapril",
+      "label": "Enalapril Maleate API",
+      "type": "Material",
+      "properties": {
+        "behaviour": "elastic recovery under rapid compression"
+      }
+    },
+    {
+      "id": "mat_granule",
+      "label": "Granule Blend",
+      "type": "Material",
+      "properties": {
+        "LOD_target": "2.0%",
+        "plasticity": "moisture-dependent"
+      }
+    },
+    {
+      "id": "rc_dwell_time",
+      "label": "Reduced Dwell Time",
+      "type": "RootCause",
+      "properties": {
+        "mechanism": "higher turret RPM reduces contact time at compression",
+        "not_evaluated_at_scale_up": "true"
+      }
+    },
+    {
+      "id": "rc_low_moisture",
+      "label": "Low Granule Moisture",
+      "type": "RootCause",
+      "properties": {
+        "value_at_issue": "1.6% LOD",
+        "effect": "reduced granule plasticity, worse elastic recovery"
+      }
+    },
+    {
+      "id": "rc_elastic_recovery",
+      "label": "Elastic Recovery",
+      "type": "RootCause",
+      "properties": {
+        "driver": "API morphology + low moisture + short dwell",
+        "location": "post-ejection cam"
+      }
+    },
+    {
+      "id": "act_reduce_turret",
+      "label": "Reduce Turret Speed",
+      "type": "Action",
+      "properties": {
+        "change": "35 RPM → 28 RPM",
+        "outcome": "rejection dropped from 4-5% to ~2%"
+      }
+    },
+    {
+      "id": "act_increase_pre",
+      "label": "Increase Pre-compression",
+      "type": "Action",
+      "properties": {
+        "change": "3.5 kN → 4.5 kN",
+        "outcome": "rejection dropped to <1%"
+      }
+    },
+    {
+      "id": "act_feed_frame",
+      "label": "Adjust Feed Frame Speed",
+      "type": "Action",
+      "properties": {
+        "change": "reduced speed",
+        "outcome": "weight CV improved from 1.8% to 0.9%"
+      }
+    },
+    {
+      "id": "act_punch_depth",
+      "label": "Adjust Punch Depth",
+      "type": "Action",
+      "properties": {
+        "change": "+0.2mm",
+        "performed_by": "Maria (operator)",
+        "documented": "No",
+        "outcome": "die fill consistency improved"
+      }
+    },
+    {
+      "id": "res_stable_run",
+      "label": "Stable Compression Run",
+      "type": "Resolution",
+      "properties": {
+        "rejection_rate": "<1%",
+        "weight_cv": "0.9%",
+        "combination": "turret speed + pre-force + feed frame + punch depth"
+      }
+    },
+    {
+      "id": "lesson_dwell",
+      "label": "Re-evaluate Dwell Time at Scale",
+      "type": "Lesson",
+      "properties": {
+        "recommendation": "calculate effective dwell time for target commercial turret speed before scale-up"
+      }
+    },
+    {
+      "id": "lesson_moisture",
+      "label": "Tighter Moisture Action Limit",
+      "type": "Lesson",
+      "properties": {
+        "recommendation": "commercial LOD action limit >= 1.8% (not just spec lower limit of spec)"
+      }
+    },
+    {
+      "id": "lesson_punch_depth",
+      "label": "Document Punch Depth Setting",
+      "type": "Lesson",
+      "properties": {
+        "recommendation": "explicitly include optimal punch penetration depth in commercial compression procedure"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e01",
+      "from": "batch_sup30498",
+      "to": "product_enalapril",
+      "label": "CONTAINS_PRODUCT",
+      "properties": {}
+    },
+    {
+      "id": "e02",
+      "from": "batch_sup30498",
+      "to": "equip_xl800",
+      "label": "RAN_ON",
+      "properties": {
+        "site": "Commercial"
+      }
+    },
+    {
+      "id": "e03",
+      "from": "batch_sup30498",
+      "to": "eng_schulz",
+      "label": "INVESTIGATED_BY",
+      "properties": {}
+    },
+    {
+      "id": "e04",
+      "from": "equip_xl400",
+      "to": "equip_xl800",
+      "label": "SCALED_TO",
+      "properties": {
+        "note": "pilot to commercial"
+      }
+    },
+    {
+      "id": "e05",
+      "from": "site_pilot",
+      "to": "site_commercial",
+      "label": "TRANSFERRED_TO",
+      "properties": {
+        "process": "Enalapril OSD"
+      }
+    },
+    {
+      "id": "e06",
+      "from": "equip_xl400",
+      "to": "site_pilot",
+      "label": "LOCATED_AT",
+      "properties": {}
+    },
+    {
+      "id": "e07",
+      "from": "equip_xl800",
+      "to": "site_commercial",
+      "label": "LOCATED_AT",
+      "properties": {}
+    },
+    {
+      "id": "e08",
+      "from": "batch_sup30498",
+      "to": "issue_capping",
+      "label": "EXPERIENCED",
+      "properties": {
+        "severity": "moderate"
+      }
+    },
+    {
+      "id": "e09",
+      "from": "batch_sup30498",
+      "to": "issue_weight_var",
+      "label": "EXPERIENCED",
+      "properties": {}
+    },
+    {
+      "id": "e10",
+      "from": "issue_capping",
+      "to": "rc_dwell_time",
+      "label": "CAUSED_BY",
+      "properties": {}
+    },
+    {
+      "id": "e11",
+      "from": "issue_capping",
+      "to": "rc_low_moisture",
+      "label": "CAUSED_BY",
+      "properties": {
+        "interaction": "combined with elastic recovery"
+      }
+    },
+    {
+      "id": "e12",
+      "from": "issue_capping",
+      "to": "rc_elastic_recovery",
+      "label": "CAUSED_BY",
+      "properties": {}
+    },
+    {
+      "id": "e13",
+      "from": "rc_dwell_time",
+      "to": "param_turret_speed",
+      "label": "LINKED_TO",
+      "properties": {
+        "reason": "higher turret speed = shorter dwell"
+      }
+    },
+    {
+      "id": "e14",
+      "from": "rc_low_moisture",
+      "to": "param_lod",
+      "label": "LINKED_TO",
+      "properties": {}
+    },
+    {
+      "id": "e15",
+      "from": "rc_elastic_recovery",
+      "to": "mat_enalapril",
+      "label": "CONTRIBUTED_TO",
+      "properties": {}
+    },
+    {
+      "id": "e16",
+      "from": "mat_enalapril",
+      "to": "mat_granule",
+      "label": "COMPONENT_OF",
+      "properties": {}
+    },
+    {
+      "id": "e17",
+      "from": "param_dwell_time",
+      "to": "param_turret_speed",
+      "label": "DETERMINED_BY",
+      "properties": {
+        "relationship": "inverse"
+      }
+    },
+    {
+      "id": "e18",
+      "from": "act_reduce_turret",
+      "to": "param_turret_speed",
+      "label": "MODIFIED",
+      "properties": {
+        "from": "35 RPM",
+        "to": "28 RPM"
+      }
+    },
+    {
+      "id": "e19",
+      "from": "act_increase_pre",
+      "to": "param_pre_force",
+      "label": "MODIFIED",
+      "properties": {
+        "from": "3.5 kN",
+        "to": "4.5 kN"
+      }
+    },
+    {
+      "id": "e20",
+      "from": "act_feed_frame",
+      "to": "param_feed_frame",
+      "label": "MODIFIED",
+      "properties": {}
+    },
+    {
+      "id": "e21",
+      "from": "act_punch_depth",
+      "to": "param_punch_depth",
+      "label": "MODIFIED",
+      "properties": {
+        "amount": "+0.2mm"
+      }
+    },
+    {
+      "id": "e22",
+      "from": "eng_schulz",
+      "to": "act_reduce_turret",
+      "label": "PERFORMED",
+      "properties": {}
+    },
+    {
+      "id": "e23",
+      "from": "eng_schulz",
+      "to": "act_increase_pre",
+      "label": "PERFORMED",
+      "properties": {}
+    },
+    {
+      "id": "e24",
+      "from": "eng_schulz",
+      "to": "act_feed_frame",
+      "label": "PERFORMED",
+      "properties": {}
+    },
+    {
+      "id": "e25",
+      "from": "op_maria",
+      "to": "act_punch_depth",
+      "label": "PERFORMED",
+      "properties": {
+        "context": "undocumented tacit adjustment"
+      }
+    },
+    {
+      "id": "e26",
+      "from": "act_reduce_turret",
+      "to": "res_stable_run",
+      "label": "CONTRIBUTED_TO",
+      "properties": {}
+    },
+    {
+      "id": "e27",
+      "from": "act_increase_pre",
+      "to": "res_stable_run",
+      "label": "CONTRIBUTED_TO",
+      "properties": {}
+    },
+    {
+      "id": "e28",
+      "from": "act_feed_frame",
+      "to": "res_stable_run",
+      "label": "CONTRIBUTED_TO",
+      "properties": {}
+    },
+    {
+      "id": "e29",
+      "from": "act_punch_depth",
+      "to": "res_stable_run",
+      "label": "CONTRIBUTED_TO",
+      "properties": {}
+    },
+    {
+      "id": "e30",
+      "from": "issue_capping",
+      "to": "res_stable_run",
+      "label": "RESOLVED_BY",
+      "properties": {}
+    },
+    {
+      "id": "e31",
+      "from": "issue_weight_var",
+      "to": "res_stable_run",
+      "label": "RESOLVED_BY",
+      "properties": {}
+    },
+    {
+      "id": "e32",
+      "from": "lesson_dwell",
+      "to": "param_dwell_time",
+      "label": "RECOMMENDS_MONITOR",
+      "properties": {}
+    },
+    {
+      "id": "e33",
+      "from": "lesson_moisture",
+      "to": "param_lod",
+      "label": "RECOMMENDS_TIGHTER",
+      "properties": {
+        "new_action_limit": ">=1.8%"
+      }
+    },
+    {
+      "id": "e34",
+      "from": "lesson_punch_depth",
+      "to": "param_punch_depth",
+      "label": "RECOMMENDS_DOCUMENT",
+      "properties": {}
+    },
+    {
+      "id": "e35",
+      "from": "eng_schulz",
+      "to": "lesson_dwell",
+      "label": "IDENTIFIED",
+      "properties": {}
+    },
+    {
+      "id": "e36",
+      "from": "eng_schulz",
+      "to": "lesson_moisture",
+      "label": "IDENTIFIED",
+      "properties": {}
+    },
+    {
+      "id": "e37",
+      "from": "op_maria",
+      "to": "lesson_punch_depth",
+      "label": "CONTRIBUTED_TO",
+      "properties": {
+        "note": "tacit knowledge from operator"
+      }
+    }
+  ],
+  "metadata": {
+    "batch_id": "SUP30498",
+    "product": "Enalapril Tablets (OSD)",
+    "engineer": "Schulz",
+    "extraction_date": "2026-05-15",
+    "node_count": 30,
+    "edge_count": 37
+  }
+}

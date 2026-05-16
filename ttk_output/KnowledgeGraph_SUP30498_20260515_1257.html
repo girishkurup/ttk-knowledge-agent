@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Knowledge Graph -- SUP30498 | TTK Agent</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.9/standalone/umd/vis-network.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;color:#333;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+  #hdr{background:linear-gradient(135deg,#1a237e,#283593);color:#fff;padding:10px 18px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+  #hdr h1{font-size:17px;font-weight:600}
+  #hdr .sub{font-size:11px;opacity:.75;margin-top:2px}
+  #hdr .meta{font-size:11px;opacity:.8;text-align:right}
+  #main{display:flex;flex:1;overflow:hidden}
+  #net-wrap{flex:1;position:relative;background:#fff;border-right:1px solid #e0e0e0}
+  #network{width:100%;height:100%}
+  .ctrls{position:absolute;top:10px;left:10px;display:flex;gap:6px;z-index:10}
+  .btn{background:#fff;border:1px solid #ccc;padding:5px 10px;border-radius:4px;font-size:11px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  .btn:hover{background:#f0f0f0}
+  #sidebar{width:270px;display:flex;flex-direction:column;background:#fff;overflow-y:auto;flex-shrink:0}
+  .panel{padding:14px;border-bottom:1px solid #efefef}
+  .panel-title{font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+  #stats{display:flex;border-bottom:1px solid #efefef}
+  .stat{flex:1;text-align:center;padding:12px 4px;border-right:1px solid #efefef}
+  .stat:last-child{border-right:none}
+  .stat-n{font-size:24px;font-weight:700;color:#1a237e;line-height:1}
+  .stat-l{font-size:10px;color:#999;margin-top:3px}
+  .legend-row{display:flex;align-items:center;margin:4px 0;font-size:12px}
+  .dot{width:11px;height:11px;border-radius:50%;margin-right:8px;flex-shrink:0}
+  #det-content{font-size:12px;color:#555}
+  .tag{display:inline-block;padding:2px 8px;border-radius:10px;color:#fff;font-size:11px;margin-bottom:6px}
+  .node-lbl{font-size:15px;font-weight:600;color:#222;margin-bottom:8px}
+  .prop-table{width:100%;border-collapse:collapse;margin-top:4px}
+  .prop-table td{padding:3px 0;vertical-align:top;border-bottom:1px solid #f5f5f5}
+  .prop-table td:first-child{color:#999;width:42%;font-size:11px;padding-right:6px}
+  .rel-section{margin-top:10px}
+  .rel-title{font-size:11px;color:#aaa;font-weight:700;margin-bottom:4px}
+  .rel-row{font-size:11px;padding:3px 0;border-bottom:1px solid #f7f7f7;color:#555}
+  .placeholder{color:#ccc;font-style:italic}
+  #ftr{background:#f5f5f5;border-top:1px solid #e0e0e0;padding:5px 14px;font-size:10px;color:#aaa;display:flex;justify-content:space-between;flex-shrink:0}
+  #search-wrap{padding:10px 14px;border-bottom:1px solid #efefef}
+  #search{width:100%;padding:5px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px}
+</style>
+</head>
+<body>
+<div id="hdr">
+  <div>
+    <h1>Knowledge Graph &mdash; Batch SUP30498</h1>
+    <div class="sub">Enalapril Tablets (OSD) &nbsp;|&nbsp; TTK Agent Knowledge Capture</div>
+  </div>
+  <div class="meta">
+    <div>Engineer: Schulz</div>
+    <div>Generated: 2026-05-15 12:57</div>
+  </div>
+</div>
+<div id="main">
+  <div id="net-wrap">
+    <div class="ctrls">
+      <button class="btn" onclick="net.fit()">Fit View</button>
+      <button class="btn" id="phys-btn" onclick="togglePhysics()">Freeze Layout</button>
+      <button class="btn" onclick="dlJSON()">Export JSON</button>
+    </div>
+    <div id="network"></div>
+  </div>
+  <div id="sidebar">
+    <div id="stats">
+      <div class="stat"><div class="stat-n">0</div><div class="stat-l">Nodes</div></div>
+      <div class="stat"><div class="stat-n">0</div><div class="stat-l">Edges</div></div>
+      <div class="stat"><div class="stat-n" id="type-count">-</div><div class="stat-l">Types</div></div>
+    </div>
+    <div id="search-wrap">
+      <input id="search" type="text" placeholder="Search nodes..." oninput="filterNodes(this.value)">
+    </div>
+    <div class="panel">
+      <div class="panel-title">Node Types</div>
+      <div id="legend-items"></div>
+    </div>
+    <div class="panel" style="flex:1">
+      <div class="panel-title">Selected Node</div>
+      <div id="det-content"><p class="placeholder">Click any node to inspect</p></div>
+    </div>
+  </div>
+</div>
+<div id="ftr">
+  <span>TTK Agent &mdash; Tech Transfer Knowledge Capture System</span>
+  <span>Batch SUP30498 &nbsp;|&nbsp; Enalapril Tablets (OSD)</span>
+</div>
+<script>
+const G      = {"nodes": [], "edges": [], "metadata": {"batch_id": "SUP30498", "product": "Enalapril Tablets (OSD)", "engineer": "Schulz", "extraction_date": "2026-05-15", "node_count": 0, "edge_count": 0}};
+const COLORS = {"Batch": "#2196F3", "Product": "#00BCD4", "Engineer": "#FF9800", "Operator": "#FF5722", "Equipment": "#607D8B", "Site": "#9C27B0", "Issue": "#F44336", "Parameter": "#F9A825", "RootCause": "#B71C1C", "Material": "#388E3C", "Action": "#673AB7", "Resolution": "#2E7D32", "Lesson": "#00838F", "Observation": "#E64A19"};
+let physOn   = true;
+
+function shade(hex, p) {
+  const n=parseInt(hex.replace('#',''),16);
+  const r=Math.min(255,Math.max(0,(n>>16)+p));
+  const g=Math.min(255,Math.max(0,((n>>8)&0xFF)+p));
+  const b=Math.min(255,Math.max(0,(n&0xFF)+p));
+  return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+function contrast(hex) {
+  const n=parseInt(hex.replace('#',''),16);
+  const lum=(0.299*(n>>16)+0.587*((n>>8)&0xFF)+0.114*(n&0xFF))/255;
+  return lum>0.5?'#222':'#fff';
+}
+function nodeTip(n) {
+  const c=COLORS[n.type]||'#999';
+  let h='<div style="font-family:Segoe UI,Arial;font-size:12px;background:#fff;padding:8px;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.2);max-width:230px">';
+  h+='<span style="background:'+c+';color:'+contrast(c)+';padding:2px 7px;border-radius:10px;font-size:10px">'+n.type+'</span>';
+  h+='<div style="font-weight:600;margin:5px 0 3px">'+n.label+'</div>';
+  Object.entries(n.properties||{}).forEach(([k,v])=>{h+='<div style="color:#777">'+k+': <b>'+v+'</b></div>';});
+  return h+'</div>';
+}
+function edgeTip(e) {
+  let h='<div style="font-family:Segoe UI,Arial;font-size:11px;background:#fff;padding:6px 10px;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,.15)"><b>'+e.label+'</b>';
+  Object.entries(e.properties||{}).forEach(([k,v])=>{h+='<br>'+k+': '+v;});
+  return h+'</div>';
+}
+
+// Legend
+const usedTypes=[...new Set(G.nodes.map(n=>n.type))].sort();
+document.getElementById('type-count').textContent=usedTypes.length;
+const legEl=document.getElementById('legend-items');
+usedTypes.forEach(t=>{
+  legEl.innerHTML+='<div class="legend-row"><div class="dot" style="background:'+(COLORS[t]||'#999')+'"></div>'+t+'</div>';
+});
+
+// Build vis datasets
+const nodesDS=new vis.DataSet(G.nodes.map(n=>{
+  const c=COLORS[n.type]||'#999';
+  return {
+    id:n.id, label:n.label, title:nodeTip(n),
+    color:{background:c,border:shade(c,-25),highlight:{background:c,border:'#1a237e'},hover:{background:shade(c,15),border:shade(c,-15)}},
+    font:{color:contrast(c),size:12},
+    shape:'dot',size:22,shadow:{enabled:true,size:4,x:2,y:2},
+    _raw:n
+  };
+}));
+const edgesDS=new vis.DataSet(G.edges.map(e=>({
+  id:e.id,from:e.from,to:e.to,label:e.label,title:edgeTip(e),
+  arrows:'to',width:1.5,selectionWidth:2.5,
+  font:{size:10,align:'middle',background:'white',strokeWidth:0},
+  color:{color:'#bbb',highlight:'#1a237e',hover:'#3949AB'},
+  smooth:{type:'dynamic'},_raw:e
+})));
+
+// Network
+const net=new vis.Network(document.getElementById('network'),{nodes:nodesDS,edges:edgesDS},{
+  nodes:{shape:'dot',size:22,font:{size:12,face:'Segoe UI,Arial'},borderWidth:2},
+  edges:{width:1.5,font:{size:10,face:'Segoe UI,Arial'}},
+  physics:{
+    solver:'forceAtlas2Based',
+    forceAtlas2Based:{gravitationalConstant:-55,centralGravity:0.006,springLength:170,springConstant:0.05,damping:0.4},
+    stabilization:{iterations:300,updateInterval:30}
+  },
+  interaction:{hover:true,tooltipDelay:120,keyboard:true}
+});
+net.on('stabilizationIterationsDone',()=>{
+  net.setOptions({physics:{enabled:false}});
+  physOn=false;
+  document.getElementById('phys-btn').textContent='Unfreeze Layout';
+});
+
+// Click -> detail panel
+net.on('click',p=>{
+  if(!p.nodes.length){document.getElementById('det-content').innerHTML='<p class="placeholder">Click any node to inspect</p>';return;}
+  const raw=G.nodes.find(n=>n.id===p.nodes[0]);
+  if(!raw)return;
+  const c=COLORS[raw.type]||'#999';
+  let h='<span class="tag" style="background:'+c+'">'+raw.type+'</span>';
+  h+='<div class="node-lbl">'+raw.label+'</div>';
+  const props=Object.entries(raw.properties||{});
+  if(props.length){
+    h+='<table class="prop-table">';
+    props.forEach(([k,v])=>{h+='<tr><td>'+k+'</td><td>'+v+'</td></tr>';});
+    h+='</table>';
+  }
+  const rels=G.edges.filter(e=>e.from===raw.id||e.to===raw.id);
+  if(rels.length){
+    h+='<div class="rel-section"><div class="rel-title">Relationships ('+rels.length+')</div>';
+    rels.forEach(e=>{
+      const out=e.from===raw.id;
+      const otherId=out?e.to:e.from;
+      const other=G.nodes.find(n=>n.id===otherId);
+      h+='<div class="rel-row">'+(out?'&rarr;':'&larr;')+' <b>'+e.label+'</b> &nbsp;'+(other?other.label:otherId)+'</div>';
+    });
+    h+='</div>';
+  }
+  document.getElementById('det-content').innerHTML=h;
+});
+
+// Search
+function filterNodes(q){
+  const term=q.toLowerCase().trim();
+  if(!term){
+    G.nodes.forEach(n=>{const c=COLORS[n.type]||'#999';nodesDS.update({id:n.id,color:{background:c,border:shade(c,-25)}});});
+    return;
+  }
+  G.nodes.forEach(n=>{
+    const hit=n.label.toLowerCase().includes(term)||n.type.toLowerCase().includes(term)||JSON.stringify(n.properties||{}).toLowerCase().includes(term);
+    const c=COLORS[n.type]||'#999';
+    nodesDS.update({id:n.id,color:hit?{background:c,border:shade(c,-25)}:{background:'#eee',border:'#ccc'}});
+  });
+}
+function togglePhysics(){
+  physOn=!physOn;
+  net.setOptions({physics:{enabled:physOn}});
+  document.getElementById('phys-btn').textContent=physOn?'Freeze Layout':'Unfreeze Layout';
+}
+function dlJSON(){
+  const b=new Blob([JSON.stringify(G,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='KnowledgeGraph_SUP30498.json';a.click();
+}
+</script>
+</body>
+</html>

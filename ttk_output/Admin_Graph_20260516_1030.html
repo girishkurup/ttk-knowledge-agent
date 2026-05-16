@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Knowledge Graph -- SUP30498 | TTK Agent</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.9/standalone/umd/vis-network.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f7fa;color:#333;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+  #hdr{background:linear-gradient(135deg,#1a237e,#283593);color:#fff;padding:10px 18px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+  #hdr h1{font-size:17px;font-weight:600}
+  #hdr .sub{font-size:11px;opacity:.75;margin-top:2px}
+  #hdr .meta{font-size:11px;opacity:.8;text-align:right}
+  #main{display:flex;flex:1;overflow:hidden}
+  #net-wrap{flex:1;position:relative;background:#fff;border-right:1px solid #e0e0e0}
+  #network{width:100%;height:100%}
+  .ctrls{position:absolute;top:10px;left:10px;display:flex;gap:6px;z-index:10}
+  .btn{background:#fff;border:1px solid #ccc;padding:5px 10px;border-radius:4px;font-size:11px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  .btn:hover{background:#f0f0f0}
+  #sidebar{width:270px;display:flex;flex-direction:column;background:#fff;overflow-y:auto;flex-shrink:0}
+  .panel{padding:14px;border-bottom:1px solid #efefef}
+  .panel-title{font-size:11px;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+  #stats{display:flex;border-bottom:1px solid #efefef}
+  .stat{flex:1;text-align:center;padding:12px 4px;border-right:1px solid #efefef}
+  .stat:last-child{border-right:none}
+  .stat-n{font-size:24px;font-weight:700;color:#1a237e;line-height:1}
+  .stat-l{font-size:10px;color:#999;margin-top:3px}
+  .legend-row{display:flex;align-items:center;margin:4px 0;font-size:12px}
+  .dot{width:11px;height:11px;border-radius:50%;margin-right:8px;flex-shrink:0}
+  #det-content{font-size:12px;color:#555}
+  .tag{display:inline-block;padding:2px 8px;border-radius:10px;color:#fff;font-size:11px;margin-bottom:6px}
+  .node-lbl{font-size:15px;font-weight:600;color:#222;margin-bottom:8px}
+  .prop-table{width:100%;border-collapse:collapse;margin-top:4px}
+  .prop-table td{padding:3px 0;vertical-align:top;border-bottom:1px solid #f5f5f5}
+  .prop-table td:first-child{color:#999;width:42%;font-size:11px;padding-right:6px}
+  .rel-section{margin-top:10px}
+  .rel-title{font-size:11px;color:#aaa;font-weight:700;margin-bottom:4px}
+  .rel-row{font-size:11px;padding:3px 0;border-bottom:1px solid #f7f7f7;color:#555}
+  .placeholder{color:#ccc;font-style:italic}
+  #ftr{background:#f5f5f5;border-top:1px solid #e0e0e0;padding:5px 14px;font-size:10px;color:#aaa;display:flex;justify-content:space-between;flex-shrink:0}
+  #search-wrap{padding:10px 14px;border-bottom:1px solid #efefef}
+  #search{width:100%;padding:5px 8px;border:1px solid #ddd;border-radius:4px;font-size:12px}
+</style>
+</head>
+<body>
+<div id="hdr">
+  <div>
+    <h1>Knowledge Graph &mdash; Batch SUP30498</h1>
+    <div class="sub">Enalapril Tablets (OSD) &nbsp;|&nbsp; TTK Agent Knowledge Capture</div>
+  </div>
+  <div class="meta">
+    <div>Engineer: Schulz</div>
+    <div>Generated: 2026-05-16 10:30</div>
+  </div>
+</div>
+<div id="main">
+  <div id="net-wrap">
+    <div class="ctrls">
+      <button class="btn" onclick="net.fit()">Fit View</button>
+      <button class="btn" id="phys-btn" onclick="togglePhysics()">Freeze Layout</button>
+      <button class="btn" onclick="dlJSON()">Export JSON</button>
+    </div>
+    <div id="network"></div>
+  </div>
+  <div id="sidebar">
+    <div id="stats">
+      <div class="stat"><div class="stat-n">52</div><div class="stat-l">Nodes</div></div>
+      <div class="stat"><div class="stat-n">46</div><div class="stat-l">Edges</div></div>
+      <div class="stat"><div class="stat-n" id="type-count">-</div><div class="stat-l">Types</div></div>
+    </div>
+    <div id="search-wrap">
+      <input id="search" type="text" placeholder="Search nodes..." oninput="filterNodes(this.value)">
+    </div>
+    <div class="panel">
+      <div class="panel-title">Node Types</div>
+      <div id="legend-items"></div>
+    </div>
+    <div class="panel" style="flex:1">
+      <div class="panel-title">Selected Node</div>
+      <div id="det-content"><p class="placeholder">Click any node to inspect</p></div>
+    </div>
+  </div>
+</div>
+<div id="ftr">
+  <span>TTK Agent &mdash; Tech Transfer Knowledge Capture System</span>
+  <span>Batch SUP30498 &nbsp;|&nbsp; Enalapril Tablets (OSD)</span>
+</div>
+<script>
+const G      = {"nodes": [{"id": "act_feed_frame", "label": "Adjust Feed Frame Speed", "type": "Action", "properties": {"change": "reduced speed", "outcome": "weight CV improved from 1.8% to 0.9%", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "act_increase_pre", "label": "Increase Pre-compression", "type": "Action", "properties": {"change": "3.5 kN → 4.5 kN", "outcome": "rejection dropped to <1%", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "act_punch_depth", "label": "Adjust Punch Depth", "type": "Action", "properties": {"change": "+0.2mm", "performed_by": "Maria (operator)", "documented": "No", "outcome": "die fill consistency improved", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "act_reduce_turret", "label": "Reduce Turret Speed", "type": "Action", "properties": {"change": "35 RPM → 28 RPM", "outcome": "rejection dropped from 4-5% to ~2%", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "action_adjust_feed_frame", "label": "Adjust Feed Frame Speed", "type": "Action", "properties": {"description": "Slowed force-feeder speed to reduce over-fill variability", "result": "weight CV improved from 1.8% to 0.9%", "sessions": "KnowledgeGraph_SUP30498_20260515_1300", "frequency": "1"}}, {"id": "action_adjust_punch_depth", "label": "Adjust Punch Penetration Depth", "type": "Action", "properties": {"adjustment": "+0.2 mm", "performed_by": "Maria", "documented": "false", "sessions": "KnowledgeGraph_SUP30498_20260515_1300", "frequency": "1"}}, {"id": "action_increase_precompression", "label": "Increase Pre-Compression", "type": "Action", "properties": {"from_value": "3.5 kN", "to_value": "4.5 kN", "result": "rejection dropped to <1%", "sessions": "KnowledgeGraph_SUP30498_20260515_1300", "frequency": "1"}}, {"id": "action_reduce_turret_speed", "label": "Reduce Turret Speed", "type": "Action", "properties": {"from_value": "35 RPM", "to_value": "28 RPM", "result": "rejection dropped to ~2%", "sessions": "KnowledgeGraph_SUP30498_20260515_1300", "frequency": "1"}}, {"id": "batch_sup30498", "label": "SUP30498", "type": "Batch", "properties": {"batch_id": "SUP30498", "date": "2026-05-15", "scale": "commercial", "rejection_rate_initial": "4-5%", "sessions": "KnowledgeGraph_SUP30498_20260515_1300, KnowledgeGraph_SUP30498_SAMPLE", "frequency": "2"}}, {"id": "eng_schulz", "label": "Schulz", "type": "Engineer", "properties": {"role": "Process Engineer", "site": "Commercial", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "engineer_schulz", "label": "Schulz", "type": "Engineer", "properties": {"name": "Schulz", "role": "process engineer", "interview_date": "2026-05-15", "sessions": "KnowledgeGraph_SUP30498_20260515_1300", "frequency": "1"}}, {"id": "equip_xl400", "label": "Korsch XL400", "type": "Equipment", "properties": {"site": "Pilot Plant", "type": "Rotary Tablet Press", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "equip_xl800", "label": "Korsch XL800", "type": "Equipment", "properties": {"site": "Commercial", "type": "Rotary Tablet Press", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "equipment_korsch_xl400", "label": "Korsch XL400", "type": "Equipment", "properties": {"model": "Korsch XL400", "scale": "pilot", "turret_speed": "20 RPM", "sessions": "KnowledgeGraph_SUP30498_20260515_1300", "frequency": "1"}}, {"id": "equipment_korsch_xl800", "label": "Korsch XL800", "type": "Equipment", "properties": {"model": "Korsch XL800", "scale": "commercial", "turret_speed_initial": "35 RPM", "sessions": "KnowledgeGraph_SUP30498_20260515_1300", "frequency": "1"}}, {"id": "issue_capping", "label": "Tablet Capping", "type": "Issue", "properties": {"subtype": "lamination tendency", "onset": "after ~2000 tablets", "worst_positions": "punches 12 & 13", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "issue_capping_lamination", "label": "Capping / Lamination", "type": "Issue", "properties": {"type": "capping and lamination tendency", "onset": "~2000 tablets into campaign", "worst_positions": "punch positions 12 and 13", "location": "post-ejection cam", "sessions": "KnowledgeGraph_SUP30498_20260515_1300", "frequency": "1"}}, {"id": "issue_weight_var", "label": "Weight Variability", "type": "Issue", "properties": {"metric": "weight CV", "pilot_cv": "n/a", "initial_commercial_cv": "1.8%", "resolved_cv": "0.9%", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "issue_weight_variability", "label": "Weight Variability", "type": "Issue", "properties": {"type": "weight uniformity", "initial_weight_cv": "1.8%", "resolved_weight_cv": "0.9%", "sessions": "KnowledgeGraph_SUP30498_20260515_1300", "frequency": "1"}}, {"id": "lesson_dwell", "label": "Re-evaluate Dwell Time at Scale", "type": "Lesson", "properties": {"recommendation": "calculate effective dwell time for target commercial turret speed before scale-up", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "lesson_dwell_time_evaluation", "label": "Evaluate Dwell Time at Scale", "type": "Lesson", "properties": {"recommendation": "Evaluate formulation elastic recovery sensitivity against new dwell profile before commercial scale-up", "category": "scale-up risk", "sessions": "KnowledgeGraph_SUP30498_20260515_1300", "frequency": "1"}}, {"id": "lesson_moisture", "label": "Tighter Moisture Action Limit", "type": "Lesson", "properties": {"recommendation": "commercial LOD action limit >= 1.8% (not just spec lower limit of spec)", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "lesson_moisture_action_limit", "label": "Tighten Moisture Action Limit", "type": "Lesson", "properties": {"recommendation": "Set commercial LOD action limit to >=1.8%; 2.0% target alone insufficient", "category": "parameter control", "sessions": "KnowledgeGraph_SUP30498_20260515_1300", "frequency": "1"}}, {"id": "lesson_punch_depth", "label": "Document Punch Depth Setting", "type": "Lesson", "properties": {"recommendation": "explicitly include optimal punch penetration depth in commercial compression procedure", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "lesson_punch_depth_procedure", "label": "Document Punch Penetration Depth", "type": "Lesson", "properties": {"recommendation": "Explicitly include punch penetration depth in commercial compression procedure", "category": "procedural documentation", "sessions": "KnowledgeGraph_SUP30498_20260515_1300", "frequency": "1"}}, {"id": "mat_enalapril", "label": "Enalapril Maleate API", "type": "Material", "properties": {"behaviour": "elastic recovery under rapid compression", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "mat_granule", "label": "Granule Blend", "type": "Material", "properties": {"LOD_target": "2.0%", "plasticity": "moisture-dependent", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "material_enalapril_maleate", "label": "Enalapril Maleate API", "type": "Material", "properties": {"type": "API", "characteristic": "elastic recovery tendency under rapid compression", "sessions": "KnowledgeGraph_SUP30498_20260515_1300", "frequency": "1"}}, {"id": "obs_rejection_onset", "label": "Rejection Onset at 2000 Tablets", "type": "Observation", "properties": {"timestamp": "~2000 tablets into campaign", "detail": "metal detector rejections climbing, primarily capping events", "sessions": "KnowledgeGraph_SUP30498_20260515_1300", "frequency": "1"}}, {"id": "op_maria", "label": "Maria", "type": "Operator", "properties": {"role": "Press Operator", "site": "Commercial", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "operator_maria", "label": "Maria", "type": "Operator", "properties": {"name": "Maria", "role": "press operator", "contribution": "adjusted punch penetration depth", "sessions": "KnowledgeGraph_SUP30498_20260515_1300", "frequency": "1"}}, {"id": "param_dwell_time", "label": "Dwell Time", "type": "Parameter", "properties": {"direction": "reduced at commercial scale", "cause": "higher turret speed", "unit": "ms", "sessions": "KnowledgeGraph_SUP30498_20260515_1300, KnowledgeGraph_SUP30498_SAMPLE", "frequency": "2"}}, {"id": "param_feed_frame", "label": "Feed Frame Speed", "type": "Parameter", "properties": {"adjustment": "reduced to improve fill uniformity", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "param_lod", "label": "Blend LOD", "type": "Parameter", "properties": {"target": "2.0%", "pilot_range": "1.9-2.1%", "commercial_actual": "1.6%", "unit": "%", "sessions": "KnowledgeGraph_SUP30498_20260515_1300, KnowledgeGraph_SUP30498_SAMPLE", "frequency": "2"}}, {"id": "param_main_compression_force", "label": "Main Compression Force", "type": "Parameter", "properties": {"pilot_value": "12 kN", "commercial_value": "12 kN", "unit": "kN", "sessions": "KnowledgeGraph_SUP30498_20260515_1300", "frequency": "1"}}, {"id": "param_main_force", "label": "Main Compression Force", "type": "Parameter", "properties": {"pilot_value": "12 kN", "commercial_value": "12 kN", "unit": "kN", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "param_pre_force", "label": "Pre-compression Force", "type": "Parameter", "properties": {"pilot_value": "3 kN", "initial_commercial": "3.5 kN", "resolved": "4.5 kN", "unit": "kN", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "param_precompression_force", "label": "Pre-Compression Force", "type": "Parameter", "properties": {"pilot_value": "3 kN", "commercial_initial": "3.5 kN", "commercial_adjusted": "4.5 kN", "unit": "kN", "sessions": "KnowledgeGraph_SUP30498_20260515_1300", "frequency": "1"}}, {"id": "param_punch_depth", "label": "Punch Penetration Depth", "type": "Parameter", "properties": {"pilot_value": "standard", "commercial_adjustment": "+0.2mm", "documented": "No", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "param_punch_penetration_depth", "label": "Punch Penetration Depth", "type": "Parameter", "properties": {"adjustment": "+0.2 mm deeper", "documented": "false", "impact": "improved die fill consistency", "sessions": "KnowledgeGraph_SUP30498_20260515_1300", "frequency": "1"}}, {"id": "param_turret_speed", "label": "Turret Speed", "type": "Parameter", "properties": {"pilot_value": "20 RPM", "commercial_initial": "35 RPM", "commercial_adjusted": "28 RPM", "unit": "RPM", "sessions": "KnowledgeGraph_SUP30498_20260515_1300, KnowledgeGraph_SUP30498_SAMPLE", "frequency": "2"}}, {"id": "product_enalapril", "label": "Enalapril Tablets OSD", "type": "Product", "properties": {"form": "Oral Solid Dosage", "API": "Enalapril Maleate", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "product_enalapril_tablets", "label": "Enalapril Tablets OSD", "type": "Product", "properties": {"name": "Enalapril Tablets", "form": "OSD", "dosage_form": "tablet", "sessions": "KnowledgeGraph_SUP30498_20260515_1300", "frequency": "1"}}, {"id": "rc_dwell_time", "label": "Reduced Dwell Time", "type": "RootCause", "properties": {"mechanism": "higher turret RPM reduces contact time at compression", "not_evaluated_at_scale_up": "true", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "rc_elastic_recovery", "label": "Elastic Recovery", "type": "RootCause", "properties": {"driver": "API morphology + low moisture + short dwell", "location": "post-ejection cam", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "rc_low_moisture", "label": "Low Granule Moisture", "type": "RootCause", "properties": {"value_at_issue": "1.6% LOD", "effect": "reduced granule plasticity, worse elastic recovery", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "res_stable_run", "label": "Stable Compression Run", "type": "Resolution", "properties": {"rejection_rate": "<1%", "weight_cv": "0.9%", "combination": "turret speed + pre-force + feed frame + punch depth", "sessions": "KnowledgeGraph_SUP30498_SAMPLE", "frequency": "1"}}, {"id": "resolution_combined_adjustments", "label": "Combined Parameter Adjustments", "type": "Resolution", "properties": {"final_rejection_rate": "<1%", "actions_combined": "turret speed reduction, pre-compression increase, feed frame adjustment, punch depth adjustment", "sessions": "KnowledgeGraph_SUP30498_20260515_1300", "frequency": "1"}}, {"id": "rootcause_low_moisture", "label": "Low-End Blend Moisture", "type": "RootCause", "properties": {"description": "Commercial LOD at 1.6% reduced granule plasticity", "interaction": "amplified elastic recovery under rapid compression", "sessions": "KnowledgeGraph_SUP30498_20260515_1300", "frequency": "1"}}, {"id": "rootcause_reduced_dwell_time", "label": "Reduced Dwell Time", "type": "RootCause", "properties": {"description": "Higher turret speed at commercial scale significantly reduced dwell time", "scale_sensitivity": "not evaluated during scale-up", "sessions": "KnowledgeGraph_SUP30498_20260515_1300", "frequency": "1"}}, {"id": "site_commercial", "label": "Commercial Site", "type": "Site", "properties": {"scale": "commercial", "campaign": "SUP30498", "sessions": "KnowledgeGraph_SUP30498_20260515_1300, KnowledgeGraph_SUP30498_SAMPLE", "frequency": "2"}}, {"id": "site_pilot", "label": "Pilot Plant", "type": "Site", "properties": {"scale": "pilot", "rejection_rate": "<0.5%", "sessions": "KnowledgeGraph_SUP30498_20260515_1300, KnowledgeGraph_SUP30498_SAMPLE", "frequency": "2"}}], "edges": [{"id": "e01", "from": "batch_sup30498", "to": "product_enalapril", "label": "CONTAINS_PRODUCT", "properties": {}}, {"id": "e02", "from": "batch_sup30498", "to": "equip_xl800", "label": "RAN_ON", "properties": {"site": "Commercial"}}, {"id": "e03", "from": "batch_sup30498", "to": "eng_schulz", "label": "INVESTIGATED_BY", "properties": {}}, {"id": "e04", "from": "equip_xl400", "to": "equip_xl800", "label": "SCALED_TO", "properties": {"note": "pilot to commercial"}}, {"id": "e05", "from": "site_pilot", "to": "site_commercial", "label": "TRANSFERRED_TO", "properties": {"process": "Enalapril OSD"}}, {"id": "e06", "from": "equip_xl400", "to": "site_pilot", "label": "LOCATED_AT", "properties": {}}, {"id": "e07", "from": "equip_xl800", "to": "site_commercial", "label": "LOCATED_AT", "properties": {}}, {"id": "e08", "from": "batch_sup30498", "to": "issue_capping", "label": "EXPERIENCED", "properties": {"severity": "moderate"}}, {"id": "e09", "from": "batch_sup30498", "to": "issue_weight_var", "label": "EXPERIENCED", "properties": {}}, {"id": "e1", "from": "batch_sup30498", "to": "product_enalapril_tablets", "label": "DERIVED_FROM", "properties": {}}, {"id": "e10", "from": "issue_capping_lamination", "to": "rootcause_reduced_dwell_time", "label": "CAUSED_BY", "properties": {"confidence": "high"}}, {"id": "e11", "from": "issue_capping_lamination", "to": "rootcause_low_moisture", "label": "CAUSED_BY", "properties": {"confidence": "high"}}, {"id": "e12", "from": "rootcause_reduced_dwell_time", "to": "param_turret_speed", "label": "LINKED_TO", "properties": {"mechanism": "higher RPM reduces dwell time"}}, {"id": "e13", "from": "rootcause_reduced_dwell_time", "to": "param_dwell_time", "label": "RESULTED_IN", "properties": {}}, {"id": "e14", "from": "rootcause_low_moisture", "to": "param_lod", "label": "LINKED_TO", "properties": {"lod_actual": "1.6%"}}, {"id": "e15", "from": "rootcause_low_moisture", "to": "material_enalapril_maleate", "label": "INTERACTS_WITH", "properties": {"effect": "amplified elastic recovery under rapid compression"}}, {"id": "e16", "from": "material_enalapril_maleate", "to": "issue_capping_lamination", "label": "CONTRIBUTED_TO", "properties": {"mechanism": "elastic recovery under rapid compression cycles"}}, {"id": "e17", "from": "action_reduce_turret_speed", "to": "issue_capping_lamination", "label": "ADDRESSED", "properties": {"partial_result": "rejection ~2%"}}, {"id": "e18", "from": "action_reduce_turret_speed", "to": "param_turret_speed", "label": "MODIFIED", "properties": {"from": "35 RPM", "to": "28 RPM"}}, {"id": "e19", "from": "action_increase_precompression", "to": "param_precompression_force", "label": "MODIFIED", "properties": {"from": "3.5 kN", "to": "4.5 kN"}}, {"id": "e2", "from": "batch_sup30498", "to": "equipment_korsch_xl800", "label": "RAN_ON", "properties": {"scale": "commercial"}}, {"id": "e20", "from": "action_increase_precompression", "to": "issue_capping_lamination", "label": "ADDRESSED", "properties": {"partial_result": "rejection <1%"}}, {"id": "e21", "from": "action_adjust_feed_frame", "to": "issue_weight_variability", "label": "ADDRESSED", "properties": {"result": "weight CV 1.8% to 0.9%"}}, {"id": "e22", "from": "action_adjust_punch_depth", "to": "param_punch_penetration_depth", "label": "MODIFIED", "properties": {"delta": "+0.2 mm"}}, {"id": "e23", "from": "action_adjust_punch_depth", "to": "issue_weight_variability", "label": "ADDRESSED", "properties": {"mechanism": "improved die fill consistency"}}, {"id": "e24", "from": "resolution_combined_adjustments", "to": "issue_capping_lamination", "label": "RESOLVED_BY", "properties": {"final_rejection_rate": "<1%"}}, {"id": "e25", "from": "resolution_combined_adjustments", "to": "issue_weight_variability", "label": "RESOLVED_BY", "properties": {"final_weight_cv": "0.9%"}}, {"id": "e26", "from": "action_reduce_turret_speed", "to": "resolution_combined_adjustments", "label": "RESULTED_IN", "properties": {}}, {"id": "e27", "from": "action_increase_precompression", "to": "resolution_combined_adjustments", "label": "RESULTED_IN", "properties": {}}, {"id": "e28", "from": "action_adjust_feed_frame", "to": "resolution_combined_adjustments", "label": "RESULTED_IN", "properties": {}}, {"id": "e29", "from": "action_adjust_punch_depth", "to": "resolution_combined_adjustments", "label": "RESULTED_IN", "properties": {}}, {"id": "e3", "from": "batch_sup30498", "to": "site_commercial", "label": "SCALED_TO", "properties": {}}, {"id": "e30", "from": "engineer_schulz", "to": "lesson_dwell_time_evaluation", "label": "REPORTED", "properties": {}}, {"id": "e31", "from": "engineer_schulz", "to": "lesson_moisture_action_limit", "label": "REPORTED", "properties": {}}, {"id": "e32", "from": "operator_maria", "to": "lesson_punch_depth_procedure", "label": "REPORTED", "properties": {"via": "tacit knowledge capture"}}, {"id": "e33", "from": "lesson_dwell_time_evaluation", "to": "param_dwell_time", "label": "RECOMMENDS", "properties": {}}, {"id": "e34", "from": "lesson_moisture_action_limit", "to": "param_lod", "label": "RECOMMENDS", "properties": {"new_action_limit": ">=1.8%"}}, {"id": "e35", "from": "lesson_punch_depth_procedure", "to": "param_punch_penetration_depth", "label": "RECOMMENDS", "properties": {"action": "include in commercial compression procedure"}}, {"id": "e36", "from": "obs_rejection_onset", "to": "issue_capping_lamination", "label": "OBSERVED_IN", "properties": {"equipment": "Korsch XL800"}}, {"id": "e37", "from": "engineer_schulz", "to": "obs_rejection_onset", "label": "REPORTED", "properties": {}}, {"id": "e4", "from": "batch_sup30498", "to": "issue_capping_lamination", "label": "EXPERIENCED", "properties": {"onset_tablet_count": "~2000"}}, {"id": "e5", "from": "batch_sup30498", "to": "issue_weight_variability", "label": "EXPERIENCED", "properties": {}}, {"id": "e6", "from": "engineer_schulz", "to": "batch_sup30498", "label": "INVESTIGATED_BY", "properties": {"interview_date": "2026-05-15"}}, {"id": "e7", "from": "operator_maria", "to": "action_adjust_punch_depth", "label": "PERFORMED_BY", "properties": {"documented_in_batch_record": "false"}}, {"id": "e8", "from": "equipment_korsch_xl400", "to": "site_pilot", "label": "RAN_ON", "properties": {}}, {"id": "e9", "from": "equipment_korsch_xl400", "to": "equipment_korsch_xl800", "label": "TRANSFERRED_TO", "properties": {"reason": "commercial scale-up"}}], "metadata": {"session_count": 4, "node_count": 52, "edge_count": 46, "generated": "2026-05-16 10:30"}};
+const COLORS = {"Batch": "#2196F3", "Product": "#00BCD4", "Engineer": "#FF9800", "Operator": "#FF5722", "Equipment": "#607D8B", "Site": "#9C27B0", "Issue": "#F44336", "Parameter": "#F9A825", "RootCause": "#B71C1C", "Material": "#388E3C", "Action": "#673AB7", "Resolution": "#2E7D32", "Lesson": "#00838F", "Observation": "#E64A19"};
+let physOn   = true;
+
+function shade(hex, p) {
+  const n=parseInt(hex.replace('#',''),16);
+  const r=Math.min(255,Math.max(0,(n>>16)+p));
+  const g=Math.min(255,Math.max(0,((n>>8)&0xFF)+p));
+  const b=Math.min(255,Math.max(0,(n&0xFF)+p));
+  return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+function contrast(hex) {
+  const n=parseInt(hex.replace('#',''),16);
+  const lum=(0.299*(n>>16)+0.587*((n>>8)&0xFF)+0.114*(n&0xFF))/255;
+  return lum>0.5?'#222':'#fff';
+}
+function nodeTip(n) {
+  const c=COLORS[n.type]||'#999';
+  let h='<div style="font-family:Segoe UI,Arial;font-size:12px;background:#fff;padding:8px;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.2);max-width:230px">';
+  h+='<span style="background:'+c+';color:'+contrast(c)+';padding:2px 7px;border-radius:10px;font-size:10px">'+n.type+'</span>';
+  h+='<div style="font-weight:600;margin:5px 0 3px">'+n.label+'</div>';
+  Object.entries(n.properties||{}).forEach(([k,v])=>{h+='<div style="color:#777">'+k+': <b>'+v+'</b></div>';});
+  return h+'</div>';
+}
+function edgeTip(e) {
+  let h='<div style="font-family:Segoe UI,Arial;font-size:11px;background:#fff;padding:6px 10px;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,.15)"><b>'+e.label+'</b>';
+  Object.entries(e.properties||{}).forEach(([k,v])=>{h+='<br>'+k+': '+v;});
+  return h+'</div>';
+}
+
+// Legend
+const usedTypes=[...new Set(G.nodes.map(n=>n.type))].sort();
+document.getElementById('type-count').textContent=usedTypes.length;
+const legEl=document.getElementById('legend-items');
+usedTypes.forEach(t=>{
+  legEl.innerHTML+='<div class="legend-row"><div class="dot" style="background:'+(COLORS[t]||'#999')+'"></div>'+t+'</div>';
+});
+
+// Build vis datasets
+const nodesDS=new vis.DataSet(G.nodes.map(n=>{
+  const c=COLORS[n.type]||'#999';
+  return {
+    id:n.id, label:n.label, title:nodeTip(n),
+    color:{background:c,border:shade(c,-25),highlight:{background:c,border:'#1a237e'},hover:{background:shade(c,15),border:shade(c,-15)}},
+    font:{color:contrast(c),size:12},
+    shape:'dot',size:22,shadow:{enabled:true,size:4,x:2,y:2},
+    _raw:n
+  };
+}));
+const edgesDS=new vis.DataSet(G.edges.map(e=>({
+  id:e.id,from:e.from,to:e.to,label:e.label,title:edgeTip(e),
+  arrows:'to',width:1.5,selectionWidth:2.5,
+  font:{size:10,align:'middle',background:'white',strokeWidth:0},
+  color:{color:'#bbb',highlight:'#1a237e',hover:'#3949AB'},
+  smooth:{type:'dynamic'},_raw:e
+})));
+
+// Network
+const net=new vis.Network(document.getElementById('network'),{nodes:nodesDS,edges:edgesDS},{
+  nodes:{shape:'dot',size:22,font:{size:12,face:'Segoe UI,Arial'},borderWidth:2},
+  edges:{width:1.5,font:{size:10,face:'Segoe UI,Arial'}},
+  physics:{
+    solver:'forceAtlas2Based',
+    forceAtlas2Based:{gravitationalConstant:-55,centralGravity:0.006,springLength:170,springConstant:0.05,damping:0.4},
+    stabilization:{iterations:300,updateInterval:30}
+  },
+  interaction:{hover:true,tooltipDelay:120,keyboard:true}
+});
+net.on('stabilizationIterationsDone',()=>{
+  net.setOptions({physics:{enabled:false}});
+  physOn=false;
+  document.getElementById('phys-btn').textContent='Unfreeze Layout';
+});
+
+// Click -> detail panel
+net.on('click',p=>{
+  if(!p.nodes.length){document.getElementById('det-content').innerHTML='<p class="placeholder">Click any node to inspect</p>';return;}
+  const raw=G.nodes.find(n=>n.id===p.nodes[0]);
+  if(!raw)return;
+  const c=COLORS[raw.type]||'#999';
+  let h='<span class="tag" style="background:'+c+'">'+raw.type+'</span>';
+  h+='<div class="node-lbl">'+raw.label+'</div>';
+  const props=Object.entries(raw.properties||{});
+  if(props.length){
+    h+='<table class="prop-table">';
+    props.forEach(([k,v])=>{h+='<tr><td>'+k+'</td><td>'+v+'</td></tr>';});
+    h+='</table>';
+  }
+  const rels=G.edges.filter(e=>e.from===raw.id||e.to===raw.id);
+  if(rels.length){
+    h+='<div class="rel-section"><div class="rel-title">Relationships ('+rels.length+')</div>';
+    rels.forEach(e=>{
+      const out=e.from===raw.id;
+      const otherId=out?e.to:e.from;
+      const other=G.nodes.find(n=>n.id===otherId);
+      h+='<div class="rel-row">'+(out?'&rarr;':'&larr;')+' <b>'+e.label+'</b> &nbsp;'+(other?other.label:otherId)+'</div>';
+    });
+    h+='</div>';
+  }
+  document.getElementById('det-content').innerHTML=h;
+});
+
+// Search
+function filterNodes(q){
+  const term=q.toLowerCase().trim();
+  if(!term){
+    G.nodes.forEach(n=>{const c=COLORS[n.type]||'#999';nodesDS.update({id:n.id,color:{background:c,border:shade(c,-25)}});});
+    return;
+  }
+  G.nodes.forEach(n=>{
+    const hit=n.label.toLowerCase().includes(term)||n.type.toLowerCase().includes(term)||JSON.stringify(n.properties||{}).toLowerCase().includes(term);
+    const c=COLORS[n.type]||'#999';
+    nodesDS.update({id:n.id,color:hit?{background:c,border:shade(c,-25)}:{background:'#eee',border:'#ccc'}});
+  });
+}
+function togglePhysics(){
+  physOn=!physOn;
+  net.setOptions({physics:{enabled:physOn}});
+  document.getElementById('phys-btn').textContent=physOn?'Freeze Layout':'Unfreeze Layout';
+}
+function dlJSON(){
+  const b=new Blob([JSON.stringify(G,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='KnowledgeGraph_SUP30498.json';a.click();
+}
+</script>
+</body>
+</html>
