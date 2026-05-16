@@ -26,7 +26,8 @@ if hasattr(sys.stdout, "reconfigure"):
 load_dotenv(Path(__file__).parent / ".env", override=True)
 
 from database import (
-    init_db, create_session, save_message, complete_session,
+    init_db, migrate_existing_files,
+    create_session, save_message, complete_session,
     save_artifact, save_graph,
     get_all_sessions, get_session_transcript,
     get_all_conversations_text, get_merged_graph,
@@ -55,6 +56,7 @@ app.mount("/output", StaticFiles(directory=str(OUTPUT_DIR)), name="output")
 @app.on_event("startup")
 async def startup():
     init_db()
+    migrate_existing_files()
 
 
 # ── Utility helpers ───────────────────────────────────────────────────────────

@@ -26,7 +26,7 @@ def _conn() -> sqlite3.Connection:
 # ── Schema ─────────────────────────────────────────────────────────────────────
 
 def init_db():
-    """Create tables if they don't exist. Safe to call on every startup."""
+    """Create tables and migrate any existing JSON/txt files. Safe to call every startup."""
     with _conn() as c:
         c.executescript("""
         CREATE TABLE IF NOT EXISTS sessions (
@@ -81,6 +81,64 @@ def init_db():
         CREATE INDEX IF NOT EXISTS idx_node_session  ON graph_nodes(session_id);
         CREATE INDEX IF NOT EXISTS idx_edge_session  ON graph_edges(session_id);
         """)
+
+
+# ── Migration ─────────────────────────────────────────────────────────────────
+
+def migrate_existing_files():
+    """Import any KnowledgeGraph_*.json files that aren't yet in the DB."""
+    import re
+    output_dir = DB_PATH.parent
+    jsons = sorted(output_dir.glob("KnowledgeGraph_*.json"))
+    if not jsons:
+        return
+    with _conn() as c:
+        for p in jsons:
+            session_id = p.stem  # e.g. KnowledgeGraph_SUP30498_20260515_1257
+            already = c.execute(
+                "SELECT 1 FROM graph_nodes WHERE session_id = ? LIMIT 1", (session_id,)
+            ).fetchone()
+            if already:
+                continue
+            try:
+                g = json.loads(p.read_text(encoding="utf-8", errors="replace"))
+            except Exception:
+                continue
+            # derive metadata
+            m = re.search(r'(\d{8}_\d{4})', p.stem)
+            ts = m.group(1) if m else p.stem
+            try:
+                dt = datetime.strptime(ts, "%Y%m%d_%H%M")
+                started = dt.isoformat()
+            except ValueError:
+                started = datetime.now().isoformat()
+            meta = g.get("metadata", {})
+            c.execute(
+                "INSERT OR IGNORE INTO sessions "
+                "(session_id, batch_id, product, engineer, started_at, status) "
+                "VALUES (?,?,?,?,?,'complete')",
+                (session_id,
+                 meta.get("batch_id", "SUP30498"),
+                 meta.get("product", "Enalapril Tablets (OSD)"),
+                 meta.get("engineer", "Schulz"),
+                 started),
+            )
+            for n in g.get("nodes", []):
+                c.execute(
+                    "INSERT OR IGNORE INTO graph_nodes "
+                    "(node_id, session_id, label, node_type, properties) VALUES (?,?,?,?,?)",
+                    (n["id"], session_id, n.get("label", ""), n.get("type", ""),
+                     json.dumps(n.get("properties", {}))),
+                )
+            for e in g.get("edges", []):
+                eid = e.get("id") or f"{e['from']}__{e['label']}__{e['to']}"
+                c.execute(
+                    "INSERT OR IGNORE INTO graph_edges "
+                    "(edge_id, session_id, from_node, to_node, label, properties) "
+                    "VALUES (?,?,?,?,?,?)",
+                    (eid, session_id, e["from"], e["to"], e.get("label", ""),
+                     json.dumps(e.get("properties", {}))),
+                )
 
 
 # ── Write operations ───────────────────────────────────────────────────────────
