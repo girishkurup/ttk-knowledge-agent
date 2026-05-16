@@ -25,6 +25,13 @@ if hasattr(sys.stdout, "reconfigure"):
 
 load_dotenv(Path(__file__).parent / ".env", override=True)
 
+from database import (
+    init_db, create_session, save_message, complete_session,
+    save_artifact, save_graph,
+    get_all_sessions, get_session_transcript,
+    get_all_conversations_text, get_merged_graph,
+)
+
 # Pull shared constants and the HTML graph builder from the CLI module
 from ttk_agent import (
     BATCH_ID, ENGINEER, GRAPH_EXTRACTION_SYSTEM, MODEL, PRODUCT,
@@ -43,6 +50,11 @@ aclient = anthropic.AsyncAnthropic()
 # ── FastAPI app ───────────────────────────────────────────────────────────────
 app = FastAPI(title="TTK Agent")
 app.mount("/output", StaticFiles(directory=str(OUTPUT_DIR)), name="output")
+
+
+@app.on_event("startup")
+async def startup():
+    init_db()
 
 
 # ── Utility helpers ───────────────────────────────────────────────────────────
@@ -116,6 +128,7 @@ async def interview_ws(ws: WebSocket, session_id: str):
 
             # ── Start: send opening question ──────────────────────────────
             if data["type"] == "start":
+                create_session(session_id, BATCH_ID, PRODUCT, ENGINEER)
                 seed = {
                     "role": "user",
                     "content": (
@@ -127,14 +140,17 @@ async def interview_ws(ws: WebSocket, session_id: str):
                 history.append(seed)
                 opening = await stream_to_ws(ws, history, TTK_INTERVIEW_SYSTEM)
                 history.append({"role": "assistant", "content": opening})
+                save_message(session_id, 0, "assistant", opening)
                 await ws.send_json({"type": "turn_update", "turn": 0,
                                     "max_turns": MAX_TURNS})
 
             # ── Engineer reply ────────────────────────────────────────────
             elif data["type"] == "message":
                 turn += 1
+                user_text = data['text'].strip()
                 history.append({"role": "user",
-                                 "content": f"[{ENGINEER}]: {data['text'].strip()}"})
+                                 "content": f"[{ENGINEER}]: {user_text}"})
+                save_message(session_id, turn, "user", user_text)
 
                 closing = turn >= MAX_TURNS
                 messages = list(history)
@@ -151,16 +167,17 @@ async def interview_ws(ws: WebSocket, session_id: str):
 
                 reply = await stream_to_ws(ws, messages, TTK_INTERVIEW_SYSTEM)
                 history.append({"role": "assistant", "content": reply})
+                save_message(session_id, turn, "assistant", reply)
                 await ws.send_json({"type": "turn_update", "turn": turn,
                                     "max_turns": MAX_TURNS})
 
                 if closing:
-                    await _post_process(ws, history)
+                    await _post_process(ws, history, session_id)
                     break
 
             # ── Engineer ends early ───────────────────────────────────────
             elif data["type"] == "finish_early":
-                await _post_process(ws, history)
+                await _post_process(ws, history, session_id)
                 break
 
     except WebSocketDisconnect:
@@ -172,12 +189,13 @@ async def interview_ws(ws: WebSocket, session_id: str):
             pass
 
 
-async def _post_process(ws: WebSocket, history: list):
+async def _post_process(ws: WebSocket, history: list, session_id: str):
     """Run Agent 2 (synthesis) and Agent 3 (graph) after the interview ends."""
     transcript = build_transcript(history)
     ts = datetime.now().strftime("%Y%m%d_%H%M")
 
-    # Save transcript
+    # Mark session complete in DB and save transcript backup
+    complete_session(session_id)
     tx = OUTPUT_DIR / f"Transcript_{BATCH_ID}_{ts}.txt"
     tx.write_text(transcript, encoding="utf-8")
     await ws.send_json({"type": "interview_complete"})
@@ -202,6 +220,8 @@ async def _post_process(ws: WebSocket, history: list):
         arts.get("knowledge_article", ""), encoding="utf-8")
     (OUTPUT_DIR / f"Checklist_{BATCH_ID}_{ts}.md").write_text(
         arts.get("checklist", ""), encoding="utf-8")
+    save_artifact(session_id, "knowledge_article", arts.get("knowledge_article", ""))
+    save_artifact(session_id, "checklist",         arts.get("checklist", ""))
 
     await ws.send_json({"type": "synthesis_done",
                         "knowledge_article": arts.get("knowledge_article", ""),
@@ -230,6 +250,9 @@ async def _post_process(ws: WebSocket, history: list):
         "node_count": len(gdata.get("nodes", [])),
         "edge_count":  len(gdata.get("edges", [])),
     })
+
+    save_artifact(session_id, "graph_json", json.dumps(gdata, ensure_ascii=False))
+    save_graph(session_id, gdata)
 
     html_name = f"KnowledgeGraph_{BATCH_ID}_{ts}.html"
     (OUTPUT_DIR / html_name).write_text(
@@ -1303,26 +1326,30 @@ function renderSessions(sessions) {
     return;
   }
   el.innerHTML = sessions.map(s => `
-    <div class="session-row" onclick="viewTranscript('${s.ts}', this)"
+    <div class="session-row" onclick="viewTranscript('${s.session_id}', this)"
          title="Click to view transcript">
       <div class="session-ts">${s.display}</div>
-      <div class="session-badges">
-        ${s.has_transcript ? '<span class="badge badge-tx">TX</span>' : ""}
-        ${s.has_ka         ? '<span class="badge badge-ka">KA</span>'  : ""}
-        ${s.has_checklist  ? '<span class="badge badge-cl">CL</span>'  : ""}
-        ${s.has_graph      ? '<span class="badge badge-gr">GR</span>'  : ""}
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">
+        ${s.batch_id || ""} &nbsp;|&nbsp; ${s.engineer || ""}
+        &nbsp;|&nbsp; ${s.turn_count || 0} turns
+      </div>
+      <div class="session-badges" style="margin-top:5px">
+        ${(s.turn_count > 0 || s.status === "complete") ? '<span class="badge badge-tx">TX</span>' : ""}
+        ${s.has_ka        ? '<span class="badge badge-ka">KA</span>'  : ""}
+        ${s.has_checklist ? '<span class="badge badge-cl">CL</span>'  : ""}
+        ${s.has_graph     ? '<span class="badge badge-gr">GR</span>'  : ""}
       </div>
     </div>`).join("");
 }
 
 // ── Transcript modal ──────────────────────────────────────────────────────────
-function viewTranscript(ts, row) {
+function viewTranscript(sessionId, row) {
   document.querySelectorAll(".session-row").forEach(r => r.classList.remove("active"));
   row.classList.add("active");
-  document.getElementById("modal-title").textContent = "Transcript — " + ts;
+  document.getElementById("modal-title").textContent = "Transcript — " + sessionId.slice(0, 8) + "...";
   document.getElementById("modal-pre").textContent   = "Loading...";
   document.getElementById("modal-overlay").classList.add("open");
-  if (ws) ws.send(JSON.stringify({ type: "view_transcript", ts }));
+  if (ws) ws.send(JSON.stringify({ type: "view_transcript", session_id: sessionId }));
 }
 
 function closeModal(e) {
@@ -1405,14 +1432,14 @@ async def admin_ws(ws: WebSocket):
             action = data.get("type")
 
             if action == "list_sessions":
-                await ws.send_json({"type": "sessions", "data": scan_sessions()})
+                await ws.send_json({"type": "sessions", "data": get_all_sessions()})
 
             elif action == "view_transcript":
-                txt = _load_transcript_text(data.get("ts", ""))
+                txt = get_session_transcript(data.get("session_id", ""))
                 await ws.send_json({"type": "transcript_content", "text": txt})
 
             elif action == "gen_ka":
-                corpus = load_all_transcripts()
+                corpus = get_all_conversations_text()
                 extras = load_existing_artifacts()
                 if not corpus:
                     await ws.send_json({"type": "error",
@@ -1435,7 +1462,7 @@ async def admin_ws(ws: WebSocket):
                 await ws.send_json({"type": "gen_done", "target": "ka", "content": full})
 
             elif action == "gen_cl":
-                corpus = load_all_transcripts()
+                corpus = get_all_conversations_text()
                 if not corpus:
                     await ws.send_json({"type": "error",
                                         "message": "No interview transcripts found in ttk_output/."})
@@ -1461,8 +1488,8 @@ async def admin_ws(ws: WebSocket):
 
                 if mode == "merge":
                     await ws.send_json({"type": "progress",
-                                        "message": "Merging existing session graphs..."})
-                    gdata = merge_graph_jsons()
+                                        "message": "Merging session graphs from database..."})
+                    gdata = get_merged_graph()
                 else:
                     corpus = load_all_transcripts()
                     if not corpus:
