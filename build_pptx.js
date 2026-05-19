@@ -196,7 +196,96 @@ function addFooter(slide, note) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-//  SLIDE 4 — ARCHITECTURE
+//  SLIDE 4 — WHY AGENTIC? SUITABILITY CRITERIA
+// ──────────────────────────────────────────────────────────────────────────────
+{
+  const s = pres.addSlide();
+  s.background = { color: BG };
+  addHeader(s, "Why Agentic? — Suitability Criteria");
+
+  const criteria = [
+    {
+      n:"01", color:NAVY,
+      title:"Repetitive & High Volume",
+      body:"Knowledge capture interviews occur after every batch deviation event across all products, sites and engineers — a continuous, recurring need.",
+    },
+    {
+      n:"02", color:BLUE,
+      title:"Measurable Outcomes",
+      body:"Success is quantifiable: article completeness, graph node count, checklist coverage, sessions captured. No ambiguity in what 'done' looks like.",
+    },
+    {
+      n:"03", color:MID,
+      title:"Current System is Slow",
+      body:"Manual post-event documentation takes days or weeks — if it happens at all. The agent captures the same knowledge in 5 minutes during the event.",
+    },
+    {
+      n:"04", color:TEAL,
+      title:"Current System is Expensive",
+      body:"Undocumented lessons lead to repeated batch failures. Each rejected commercial batch costs millions. Agentic capture breaks the repeat-failure cycle.",
+    },
+    {
+      n:"05", color:AMBER,
+      title:"Multi-Step Logic with Clear Handoffs",
+      body:"Interview → Synthesis → Graph → Admin is a defined pipeline with structured inputs/outputs at each stage — ideal for an agent chain.",
+    },
+    {
+      n:"06", color:GREEN,
+      title:"No ERP / CRM Integration Required",
+      body:"Standalone SQLite + file system. No SAP, Salesforce or complex enterprise integration — simple deployment, low risk, fast time to value.",
+    },
+  ];
+
+  const positions = [
+    {col:0,row:0},{col:1,row:0},{col:2,row:0},
+    {col:0,row:1},{col:1,row:1},{col:2,row:1},
+  ];
+
+  criteria.forEach((c, i) => {
+    const x = 0.28 + positions[i].col * 3.18;
+    const y = 1.0  + positions[i].row * 2.2;
+
+    s.addShape(pres.shapes.RECTANGLE, {
+      x, y, w:3.05, h:2.05,
+      fill:{color:WHITE}, line:{color:"E0E3F0"}, shadow:makeShadow()
+    });
+    // coloured top bar
+    s.addShape(pres.shapes.RECTANGLE, {
+      x, y, w:3.05, h:0.42, fill:{color:c.color}, line:{color:c.color}
+    });
+    // number badge
+    s.addShape(pres.shapes.RECTANGLE, {
+      x:x+0.1, y:y+0.5, w:0.44, h:0.44,
+      fill:{color:c.color}, line:{color:c.color}
+    });
+    s.addText(c.n, {
+      x:x+0.1, y:y+0.5, w:0.44, h:0.44,
+      fontSize:13, fontFace:"Georgia", bold:true, color:WHITE,
+      align:"center", valign:"middle", margin:0
+    });
+    // checkmark in top bar
+    s.addText("✓", {
+      x:x+2.6, y, w:0.38, h:0.42,
+      fontSize:16, fontFace:"Calibri", bold:true, color:WHITE,
+      align:"center", valign:"middle", margin:0
+    });
+    s.addText(c.title, {
+      x, y, w:2.55, h:0.42,
+      fontSize:10, fontFace:"Calibri", bold:true, color:WHITE,
+      valign:"middle", margin:8
+    });
+    s.addText(c.body, {
+      x:x+0.65, y:y+0.5, w:2.3, h:1.45,
+      fontSize:10.5, fontFace:"Calibri", color:TEXT,
+      valign:"top", lineSpacingMultiple:1.3
+    });
+  });
+
+  addFooter(s, "All 6 criteria met — strong fit for agentic automation");
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+//  SLIDE 5 (was 4) — ARCHITECTURE
 // ──────────────────────────────────────────────────────────────────────────────
 {
   const s = pres.addSlide();
